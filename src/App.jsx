@@ -1,9 +1,14 @@
-import DesktopLogin from './components/DesktopLogin.jsx'
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import DesktopLogin from "./pages/DesktopLogin";
+import PomodoroPage from "./pages/PomodoroPage";
 
 export default function App() {
   return (
-    <div className="w-full h-full flex items-center justify-center">
-      <DesktopLogin />
-    </div>
-  )
+    <Router>
+      <Routes>
+        <Route path="/" element={<DesktopLogin />} />
+        <Route path="/pomodoro" element={<PomodoroPage />} />
+      </Routes>
+    </Router>
+  );
 }
