@@ -1,5 +1,7 @@
-version: "3.8"
 services:
+  # --------------------
+  # 1. Serviço de Banco de Dados
+  # --------------------
   db:
     image: postgres:15
     restart: always
@@ -11,21 +13,44 @@ services:
       - db-data:/var/lib/postgresql/data
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     ports:
-      - "5432:5432"
+      - "5173"
 
+  # --------------------
+  # 2. Serviço de Backend (API Node.js/Express)
+  # --------------------
   app:
     build: ./backend
     restart: always
     depends_on:
       - db
     environment:
+      # Acessa o DB usando o nome do serviço 'db'
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       JWT_SECRET: ${JWT_SECRET}
       PORT: 3000
     volumes:
       - ./backend:/usr/src/app
-      - /usr/src/app/node_modules  # Critical: prevents host node_modules from overlaying
+      - /usr/src/app/node_modules # Impede que node_modules local sobrescreva o do container
     ports:
-      - "3000:3000"
+      - "3000:3000" # Mapeia a porta 3000 interna para a 3000 do host
+
+  # --------------------
+  # 3. Serviço de Frontend (React)
+  # --------------------
+  frontend:
+    build: ./frontend # Assume que o Dockerfile do React está em ./frontend
+    restart: always
+    depends_on:
+      - app # Garante que o backend suba antes do frontend
+    environment:
+      # CRÍTICO: Esta variável configura a URL da API para o frontend.
+      # 'app' é o nome do serviço do backend dentro da rede Docker.
+      VITE_API_BASE_URL: http://app:3000 
+    volumes:
+      - ./frontend:/usr/src/app # Monta o código fonte
+      - /usr/src/app/node_modules
+    ports:
+      - "5173:5173" # Mapeia a porta 5173 interna (ex: Vite) para a 5173 do host
+
 volumes:
   db-data:
